@@ -35,6 +35,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
   private static final String DATE_FORMAT = "yyyy-MM-dd";
+  private static final String CALENDAR_KEY = "calendar_ms";
+  private static final String APOD_KEY = "apod";
 
   private WebView webView;
   private String apiKey;
@@ -42,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
   private ApodService service;
   private Apod apod;
   private Calendar calendar;
-
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +53,17 @@ public class MainActivity extends AppCompatActivity {
     setupDatePicker();
     setupService();
     calendar = Calendar.getInstance();
-    new ApodTask().execute(calendar.getTime());
+    if (savedInstanceState != null) {
+      long savedMillis = savedInstanceState.getLong(CALENDAR_KEY, calendar.getTimeInMillis());
+      calendar.setTimeInMillis(savedMillis);
+      apod = (Apod) savedInstanceState.getSerializable(APOD_KEY);
+    }
+    if (apod != null) {
+      loading.setVisibility(View.VISIBLE);
+      webView.loadUrl(apod.getUrl());
+    } else {
+      new ApodTask().execute(calendar.getTime());
+    }
   }
 
   @Override
@@ -70,6 +81,13 @@ public class MainActivity extends AppCompatActivity {
     } else {
       return super.onOptionsItemSelected(item);
     }
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putLong(CALENDAR_KEY, calendar.getTimeInMillis());
+    outState.putSerializable(APOD_KEY, apod);
   }
 
   @SuppressLint("SetJavaScriptEnabled")
